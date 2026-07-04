@@ -282,12 +282,6 @@ const shirt = new fabric.Path(shirtPath, {
 });
 canvas.add(shirt);
 
-// collar detail
-const collar = new fabric.Path('M 175 40 C 207 72 273 72 305 40', {
-  fill:'', stroke:'#C7BFAE', strokeWidth:2, selectable:false, evented:false
-});
-canvas.add(collar);
-
 // ---- print-safe area (30cm x 40cm at 5px/cm = 150 x 200), centered on torso ----
 const SCALE = 5; // px per cm
 const AREA = { left:165, top:200, width:150, height:200 };
