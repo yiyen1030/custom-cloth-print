@@ -12,7 +12,8 @@
 
 ## 現有檔案
 
-- `tshirt-customizer.html` — 前端原型，單檔 HTML + Fabric.js（CDN 引入，未打包），可直接用瀏覽器開啟測試。
+- `index.html` — 前端原型，單檔 HTML + Fabric.js（CDN 引入，未打包），可直接用瀏覽器開啟測試。
+  已推送至 GitHub（`yiyen1030/custom-cloth-print`），並串接 Netlify 自動部署（push 到 `main` 即觸發）。
 
 ## 技術選型與原因
 
