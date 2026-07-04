@@ -115,11 +115,12 @@
     margin:0 0 18px;
   }
   .upload-box{
-    border:2px dashed var(--grey-line);
+    border:2px dashed var(--grey);
     border-radius:4px;
     padding:22px 16px;
     text-align:center;
     cursor:pointer;
+    background:#FDFCFA;
     transition:border-color .15s ease, background .15s ease;
   }
   .upload-box:hover{ border-color:var(--thread); background:#FFF8F4; }
@@ -267,8 +268,8 @@
 <script>
 const canvas = new fabric.Canvas('c', { selection:false });
 
-// ---- garment silhouette (simplified t-shirt front) ----
-const shirtPath = 'M 130 40 L 190 20 C 210 55 270 55 290 20 L 350 40 L 390 100 L 355 130 L 340 110 L 340 460 C 340 470 330 480 320 480 L 200 480 C 190 480 180 470 180 460 L 180 110 L 165 130 L 130 100 Z';
+// ---- garment silhouette (simplified t-shirt front, symmetric about x=240) ----
+const shirtPath = 'M 90 50 L 170 30 C 205 70 275 70 310 30 L 390 50 L 430 120 L 340 160 L 340 530 C 340 542 330 550 318 550 L 162 550 C 150 550 140 542 140 530 L 140 160 L 50 120 Z';
 const shirt = new fabric.Path(shirtPath, {
   left:0, top:0,
   fill:'#F5F1E8',
@@ -276,21 +277,19 @@ const shirt = new fabric.Path(shirtPath, {
   strokeWidth:2,
   selectable:false,
   evented:false,
-  scaleX:1.15, scaleY:1.15,
   originX:'left', originY:'top'
 });
 canvas.add(shirt);
 
 // collar detail
-const collar = new fabric.Path('M 195 25 C 215 55 265 55 285 25', {
-  fill:'', stroke:'#C7BFAE', strokeWidth:2, selectable:false, evented:false,
-  scaleX:1.15, scaleY:1.15
+const collar = new fabric.Path('M 175 40 C 207 72 273 72 305 40', {
+  fill:'', stroke:'#C7BFAE', strokeWidth:2, selectable:false, evented:false
 });
 canvas.add(collar);
 
-// ---- print-safe area (30cm x 40cm at 5px/cm = 150 x 200) ----
+// ---- print-safe area (30cm x 40cm at 5px/cm = 150 x 200), centered on torso ----
 const SCALE = 5; // px per cm
-const AREA = { left:165, top:190, width:150, height:200 };
+const AREA = { left:165, top:200, width:150, height:200 };
 
 const areaRect = new fabric.Rect({
   left:AREA.left, top:AREA.top, width:AREA.width, height:AREA.height,
