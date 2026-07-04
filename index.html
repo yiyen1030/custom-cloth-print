@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<title>客製印圖編輯器 — 範本</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF7F0;
+    --ink:#221F1A;
+    --thread:#C1440E;
+    --tape:#E0A800;
+    --grey:#8B8478;
+    --grey-line:#DAD3C6;
+    --panel:#FFFFFF;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Space Grotesk', sans-serif;
+    min-height:100vh;
+  }
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:36px 24px 60px;
+  }
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:18px;
+    margin-bottom:28px;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    color:var(--thread);
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:44px;
+    letter-spacing:0.02em;
+    margin:0;
+    line-height:1;
+  }
+  .spec-tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--grey);
+    text-align:right;
+    line-height:1.6;
+  }
+  .layout{
+    display:grid;
+    grid-template-columns:1fr 340px;
+    gap:32px;
+  }
+  @media (max-width:860px){
+    .layout{ grid-template-columns:1fr; }
+  }
+  .stage{
+    background:var(--panel);
+    border:1px solid var(--grey-line);
+    border-radius:4px;
+    padding:28px;
+    position:relative;
+  }
+  .stage-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--grey);
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    margin-bottom:14px;
+    display:flex;
+    justify-content:space-between;
+  }
+  canvas{ display:block; margin:0 auto; }
+  .canvas-holder{
+    display:flex;
+    justify-content:center;
+    background:
+      linear-gradient(90deg, var(--grey-line) 1px, transparent 1px) 0 0/24px 24px,
+      linear-gradient(var(--grey-line) 1px, transparent 1px) 0 0/24px 24px;
+    background-color:#FDFCFA;
+    border:1px dashed var(--grey-line);
+    padding:20px;
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--grey-line);
+    border-radius:4px;
+    padding:24px;
+    height:fit-content;
+  }
+  .panel h2{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:20px;
+    letter-spacing:0.03em;
+    margin:0 0 4px;
+  }
+  .panel .sub{
+    font-size:12px;
+    color:var(--grey);
+    margin:0 0 18px;
+  }
+  .upload-box{
+    border:2px dashed var(--grey-line);
+    border-radius:4px;
+    padding:22px 16px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .upload-box:hover{ border-color:var(--thread); background:#FFF8F4; }
+  .upload-box input{ display:none; }
+  .upload-box .icon{ font-size:22px; margin-bottom:6px; }
+  .upload-box .txt{ font-size:13px; font-weight:600; }
+  .upload-box .txt2{ font-size:11px; color:var(--grey); margin-top:2px; }
+
+  .controls-row{
+    display:flex;
+    gap:8px;
+    margin-top:16px;
+  }
+  button{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    border:1px solid var(--ink);
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:3px;
+    padding:9px 14px;
+    cursor:pointer;
+    flex:1;
+    transition:background .15s ease, color .15s ease;
+  }
+  button:hover{ background:var(--ink); color:var(--paper); }
+  button.primary{
+    background:var(--ink);
+    color:var(--paper);
+  }
+  button.primary:hover{ background:var(--thread); border-color:var(--thread); }
+  button:disabled{ opacity:.4; cursor:not-allowed; }
+  button:disabled:hover{ background:var(--paper); color:var(--ink); }
+
+  .divider{
+    height:1px;
+    background:var(--grey-line);
+    margin:20px 0;
+  }
+
+  .tech-pack{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+  }
+  .tech-pack .row{
+    display:flex;
+    justify-content:space-between;
+    padding:6px 0;
+    border-bottom:1px solid var(--grey-line);
+  }
+  .tech-pack .row span:first-child{ color:var(--grey); }
+  .tech-pack .row span:last-child{ font-weight:500; }
+
+  .json-out{
+    margin-top:14px;
+    background:var(--ink);
+    color:#E8E2D4;
+    border-radius:4px;
+    padding:14px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    word-break:break-all;
+    max-height:220px;
+    overflow-y:auto;
+    display:none;
+  }
+  .json-out.show{ display:block; }
+
+  .note{
+    font-size:11.5px;
+    color:var(--grey);
+    line-height:1.6;
+    margin-top:14px;
+  }
+  .note b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">Print placement editor · Prototype</p>
+      <h1>客製印圖編輯器</h1>
+    </div>
+    <div class="spec-tag">
+      GARMENT / T-SHIRT · FRONT<br/>
+      PRINT AREA 30 × 40 CM<br/>
+      SCALE 5 PX = 1 CM
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="stage">
+      <div class="stage-label">
+        <span>預覽畫布</span>
+        <span id="statusTxt">尚未上傳圖案</span>
+      </div>
+      <div class="canvas-holder">
+        <canvas id="c" width="480" height="580"></canvas>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>上傳圖案</h2>
+      <p class="sub">拖拉、縮放、旋轉圖案，系統會自動限制在可印刷範圍內。</p>
+
+      <label class="upload-box" id="uploadBox">
+        <div class="icon">◈</div>
+        <div class="txt">點擊或拖曳圖片到此</div>
+        <div class="txt2">PNG / JPG，建議透明背景</div>
+        <input type="file" id="fileInput" accept="image/*" />
+      </label>
+
+      <div class="controls-row">
+        <button id="resetBtn" disabled>移除圖案</button>
+        <button id="centerBtn" disabled>置中</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <h2>規格表</h2>
+      <p class="sub">即時換算成實際印刷尺寸與位置。</p>
+      <div class="tech-pack">
+        <div class="row"><span>X 位置（左上角）</span><span id="specX">—</span></div>
+        <div class="row"><span>Y 位置（左上角）</span><span id="specY">—</span></div>
+        <div class="row"><span>寬度</span><span id="specW">—</span></div>
+        <div class="row"><span>高度</span><span id="specH">—</span></div>
+        <div class="row"><span>旋轉角度</span><span id="specR">—</span></div>
+      </div>
+
+      <button class="primary" id="exportBtn" style="width:100%; margin-top:16px;" disabled>產生列印資料（JSON）</button>
+      <div class="json-out" id="jsonOut"></div>
+
+      <p class="note">
+        <b>怎麼接後端：</b>把這份 JSON（座標、尺寸、角度，單位皆為公分）連同原始圖檔一併送到你的 API，
+        伺服器端可用 Pillow / sharp 依相同比例重新合成，產出送印檔，不受瀏覽器畫面解析度影響。
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = new fabric.Canvas('c', { selection:false });
+
+// ---- garment silhouette (simplified t-shirt front) ----
+const shirtPath = 'M 130 40 L 190 20 C 210 55 270 55 290 20 L 350 40 L 390 100 L 355 130 L 340 110 L 340 460 C 340 470 330 480 320 480 L 200 480 C 190 480 180 470 180 460 L 180 110 L 165 130 L 130 100 Z';
+const shirt = new fabric.Path(shirtPath, {
+  left:0, top:0,
+  fill:'#F5F1E8',
+  stroke:'#C7BFAE',
+  strokeWidth:2,
+  selectable:false,
+  evented:false,
+  scaleX:1.15, scaleY:1.15,
+  originX:'left', originY:'top'
+});
+canvas.add(shirt);
+
+// collar detail
+const collar = new fabric.Path('M 195 25 C 215 55 265 55 285 25', {
+  fill:'', stroke:'#C7BFAE', strokeWidth:2, selectable:false, evented:false,
+  scaleX:1.15, scaleY:1.15
+});
+canvas.add(collar);
+
+// ---- print-safe area (30cm x 40cm at 5px/cm = 150 x 200) ----
+const SCALE = 5; // px per cm
+const AREA = { left:165, top:190, width:150, height:200 };
+
+const areaRect = new fabric.Rect({
+  left:AREA.left, top:AREA.top, width:AREA.width, height:AREA.height,
+  fill:'rgba(193,68,14,0.03)',
+  stroke:'#C1440E',
+  strokeDashArray:[6,4],
+  strokeWidth:1.5,
+  selectable:false, evented:false, rx:2, ry:2
+});
+canvas.add(areaRect);
+
+// corner notches (tailor pattern marks)
+function notch(x,y,dx,dy){
+  return new fabric.Line([x,y,x+dx,y+dy], { stroke:'#C1440E', strokeWidth:2, selectable:false, evented:false });
+}
+[[AREA.left,AREA.top,10,0],[AREA.left,AREA.top,0,10],
+ [AREA.left+AREA.width,AREA.top,-10,0],[AREA.left+AREA.width,AREA.top,0,10],
+ [AREA.left,AREA.top+AREA.height,10,0],[AREA.left,AREA.top+AREA.height,0,-10],
+ [AREA.left+AREA.width,AREA.top+AREA.height,-10,0],[AREA.left+AREA.width,AREA.top+AREA.height,0,-10]
+].forEach(a=>canvas.add(notch(...a)));
+
+const areaLabel = new fabric.Text('可印刷範圍', {
+  left:AREA.left, top:AREA.top-20, fontSize:11, fill:'#C1440E',
+  fontFamily:"'JetBrains Mono', monospace", selectable:false, evented:false
+});
+canvas.add(areaLabel);
+
+canvas.renderAll();
+
+// ---- upload logic ----
+let logo = null;
+const fileInput = document.getElementById('fileInput');
+const uploadBox = document.getElementById('uploadBox');
+const statusTxt = document.getElementById('statusTxt');
+const resetBtn = document.getElementById('resetBtn');
+const centerBtn = document.getElementById('centerBtn');
+const exportBtn = document.getElementById('exportBtn');
+const jsonOut = document.getElementById('jsonOut');
+
+fileInput.addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=> addLogo(ev.target.result, file.name);
+  reader.readAsDataURL(file);
+});
+
+function addLogo(dataUrl, filename){
+  if(logo){ canvas.remove(logo); }
+  fabric.Image.fromURL(dataUrl, (img)=>{
+    const maxDim = Math.min(AREA.width, AREA.height) * 0.7;
+    const scale = maxDim / Math.max(img.width, img.height);
+    img.set({
+      left: AREA.left + AREA.width/2,
+      top: AREA.top + AREA.height/2,
+      originX:'center', originY:'center',
+      scaleX:scale, scaleY:scale,
+      cornerColor:'#C1440E', cornerStrokeColor:'#221F1A',
+      cornerSize:9, transparentCorners:false,
+      borderColor:'#C1440E'
+    });
+    img.name = filename;
+    logo = img;
+    canvas.add(logo);
+    canvas.setActiveObject(logo);
+    constrainToArea(logo);
+    canvas.renderAll();
+    statusTxt.textContent = filename;
+    resetBtn.disabled = false;
+    centerBtn.disabled = false;
+    exportBtn.disabled = false;
+    updateSpec();
+  }, { crossOrigin:'anonymous' });
+}
+
+function constrainToArea(obj){
+  obj.setCoords();
+  const b = obj.getBoundingRect(true);
+  let dx = 0, dy = 0;
+  if(b.left < AREA.left) dx = AREA.left - b.left;
+  if(b.top < AREA.top) dy = AREA.top - b.top;
+  if(b.left + b.width > AREA.left + AREA.width) dx = (AREA.left+AREA.width) - (b.left+b.width);
+  if(b.top + b.height > AREA.top + AREA.height) dy = (AREA.top+AREA.height) - (b.top+b.height);
+  if(dx !== 0) obj.left += dx;
+  if(dy !== 0) obj.top += dy;
+  obj.setCoords();
+}
+
+canvas.on('object:moving', (e)=>{ constrainToArea(e.target); updateSpec(); });
+canvas.on('object:scaling', (e)=>{ constrainToArea(e.target); updateSpec(); });
+canvas.on('object:rotating', (e)=>{ updateSpec(); });
+canvas.on('object:modified', updateSpec);
+
+function updateSpec(){
+  if(!logo){ 
+    ['specX','specY','specW','specH','specR'].forEach(id=>document.getElementById(id).textContent='—');
+    return;
+  }
+  logo.setCoords();
+  const b = logo.getBoundingRect(true);
+  const xCm = ((b.left - AREA.left) / SCALE).toFixed(1);
+  const yCm = ((b.top - AREA.top) / SCALE).toFixed(1);
+  const wCm = (b.width / SCALE).toFixed(1);
+  const hCm = (b.height / SCALE).toFixed(1);
+  const rot = Math.round(logo.angle % 360);
+  document.getElementById('specX').textContent = xCm + ' cm';
+  document.getElementById('specY').textContent = yCm + ' cm';
+  document.getElementById('specW').textContent = wCm + ' cm';
+  document.getElementById('specH').textContent = hCm + ' cm';
+  document.getElementById('specR').textContent = rot + '°';
+  jsonOut.classList.remove('show');
+}
+
+resetBtn.addEventListener('click', ()=>{
+  if(logo){ canvas.remove(logo); logo = null; }
+  fileInput.value = '';
+  statusTxt.textContent = '尚未上傳圖案';
+  resetBtn.disabled = true;
+  centerBtn.disabled = true;
+  exportBtn.disabled = true;
+  jsonOut.classList.remove('show');
+  updateSpec();
+  canvas.renderAll();
+});
+
+centerBtn.addEventListener('click', ()=>{
+  if(!logo) return;
+  logo.set({ left:AREA.left+AREA.width/2, top:AREA.top+AREA.height/2 });
+  logo.setCoords();
+  canvas.renderAll();
+  updateSpec();
+});
+
+exportBtn.addEventListener('click', ()=>{
+  if(!logo) return;
+  logo.setCoords();
+  const b = logo.getBoundingRect(true);
+  const payload = {
+    order_ref: "demo-" + Date.now(),
+    garment: "tshirt",
+    view: "front",
+    print_area_cm: { width: AREA.width/SCALE, height: AREA.height/SCALE },
+    design: {
+      filename: logo.name || "uploaded-image.png",
+      position_cm: {
+        x: +((b.left - AREA.left)/SCALE).toFixed(2),
+        y: +((b.top - AREA.top)/SCALE).toFixed(2)
+      },
+      size_cm: {
+        width: +(b.width/SCALE).toFixed(2),
+        height: +(b.height/SCALE).toFixed(2)
+      },
+      rotation_deg: Math.round(logo.angle % 360)
+    }
+  };
+  jsonOut.textContent = JSON.stringify(payload, null, 2);
+  jsonOut.classList.add('show');
+});
+
+updateSpec();
+</script>
+</body>
+</html>
