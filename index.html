@@ -211,7 +211,7 @@
     </div>
     <div class="spec-tag">
       GARMENT / T-SHIRT · FRONT<br/>
-      PRINT AREA 30 × 40 CM<br/>
+      PRINT AREA 41 × 60 CM<br/>
       SCALE 5 PX = 1 CM
     </div>
   </header>
@@ -276,9 +276,9 @@ fabric.Image.fromURL('assets/polo-shirt-eyes.png', (img) => {
   canvas.sendToBack(img);
 });
 
-// ---- print-safe area (30cm x 40cm at 5px/cm = 150 x 200), centered on torso, 避開領口鈕扣與下擺弧線 ----
+// ---- print-safe area, centered on torso, 避開領口鈕扣與下擺弧線 ----
 const SCALE = 5; // px per cm
-const AREA = { left:162, top:235, width:150, height:200 };
+const AREA = { left:135, top:155, width:205, height:300 };
 
 const areaRect = new fabric.Rect({
   left:AREA.left, top:AREA.top, width:AREA.width, height:AREA.height,
