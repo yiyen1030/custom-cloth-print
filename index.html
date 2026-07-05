@@ -269,18 +269,12 @@
 <script>
 const canvas = new fabric.Canvas('c', { selection:false });
 
-// ---- garment silhouette (simplified t-shirt front, symmetric about x=240) ----
-const shirtPath = 'M 90 50 L 170 30 C 205 70 275 70 310 30 L 390 50 L 430 120 L 340 160 L 340 530 C 340 542 330 550 318 550 L 162 550 C 150 550 140 542 140 530 L 140 160 L 50 120 Z';
-const shirt = new fabric.Path(shirtPath, {
-  left:50, top:30,
-  fill:'#F5F1E8',
-  stroke:'#C7BFAE',
-  strokeWidth:2,
-  selectable:false,
-  evented:false,
-  originX:'left', originY:'top'
+// ---- garment image (換商品/角度只需替換這個檔案，SVG viewBox 已對齊 canvas 480x580) ----
+fabric.Image.fromURL('assets/tshirt-front.svg', (img) => {
+  img.set({ left:0, top:0, originX:'left', originY:'top', selectable:false, evented:false });
+  canvas.add(img);
+  canvas.sendToBack(img);
 });
-canvas.add(shirt);
 
 // ---- print-safe area (30cm x 40cm at 5px/cm = 150 x 200), centered on torso ----
 const SCALE = 5; // px per cm
