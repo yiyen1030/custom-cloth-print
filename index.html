@@ -269,16 +269,16 @@
 <script>
 const canvas = new fabric.Canvas('c', { selection:false });
 
-// ---- garment image (換商品/角度只需替換這個檔案，SVG viewBox 已對齊 canvas 480x580) ----
-fabric.Image.fromURL('assets/tshirt-front.svg', (img) => {
-  img.set({ left:0, top:0, originX:'left', originY:'top', selectable:false, evented:false });
+// ---- garment image (換商品/角度只需替換這個檔案，原圖 800x800，等比縮放 0.6 塞進 480 寬畫布) ----
+fabric.Image.fromURL('assets/polo-shirt-eyes.png', (img) => {
+  img.set({ left:0, top:50, scaleX:0.6, scaleY:0.6, originX:'left', originY:'top', selectable:false, evented:false });
   canvas.add(img);
   canvas.sendToBack(img);
 });
 
-// ---- print-safe area (30cm x 40cm at 5px/cm = 150 x 200), centered on torso ----
+// ---- print-safe area (30cm x 40cm at 5px/cm = 150 x 200), centered on torso, 避開領口鈕扣與下擺弧線 ----
 const SCALE = 5; // px per cm
-const AREA = { left:165, top:200, width:150, height:200 };
+const AREA = { left:162, top:235, width:150, height:200 };
 
 const areaRect = new fabric.Rect({
   left:AREA.left, top:AREA.top, width:AREA.width, height:AREA.height,
