@@ -2,6 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>客製印圖編輯器 — 範本</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -68,12 +69,19 @@
   @media (max-width:860px){
     .layout{ grid-template-columns:1fr; }
   }
+  @media (max-width:600px){
+    .wrap{ padding:20px 12px 40px; }
+    .stage{ padding:14px; }
+    .canvas-holder{ padding:10px; }
+    h1{ font-size:32px; }
+  }
   .stage{
     background:var(--panel);
     border:1px solid var(--grey-line);
     border-radius:4px;
     padding:28px;
     position:relative;
+    min-width:0;
   }
   .stage-label{
     font-family:'JetBrains Mono', monospace;
@@ -101,6 +109,7 @@
     border:1px solid var(--grey-line);
     border-radius:4px;
     padding:24px;
+    min-width:0;
     height:fit-content;
   }
   .panel h2{
@@ -310,6 +319,30 @@ canvas.add(areaLabel);
 
 canvas.renderAll();
 
+// ---- responsive scaling ----
+// 邏輯座標系統固定在 480x580（AREA、position_px 等都以此為準，輸出的
+// canvas_px 也不會變），畫布在螢幕上顯示多大只是視覺縮放，用 setZoom
+// 讓 Fabric 自動把滑鼠/觸控座標換算回邏輯座標，不用改任何互動邏輯。
+const LOGICAL_W = canvas.getWidth();
+const LOGICAL_H = canvas.getHeight();
+
+function fitCanvasToContainer(){
+  const stage = document.querySelector('.stage');
+  const holder = document.querySelector('.canvas-holder');
+  const stageStyle = getComputedStyle(stage);
+  const holderStyle = getComputedStyle(holder);
+  const stagePad = parseFloat(stageStyle.paddingLeft) + parseFloat(stageStyle.paddingRight);
+  const holderPad = parseFloat(holderStyle.paddingLeft) + parseFloat(holderStyle.paddingRight);
+  const available = stage.clientWidth - stagePad - holderPad;
+  const scale = Math.min(1, available / LOGICAL_W);
+  canvas.setDimensions({ width: LOGICAL_W * scale, height: LOGICAL_H * scale });
+  canvas.setZoom(scale);
+  canvas.renderAll();
+}
+
+window.addEventListener('resize', fitCanvasToContainer);
+fitCanvasToContainer();
+
 // ---- upload logic ----
 let logo = null;
 const fileInput = document.getElementById('fileInput');
@@ -339,7 +372,7 @@ function addLogo(dataUrl, filename){
       originX:'center', originY:'center',
       scaleX:scale, scaleY:scale,
       cornerColor:'#C1440E', cornerStrokeColor:'#221F1A',
-      cornerSize:9, transparentCorners:false,
+      cornerSize:12, touchCornerSize:28, transparentCorners:false,
       borderColor:'#C1440E'
     });
     img.name = filename;
