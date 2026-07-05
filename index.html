@@ -211,8 +211,8 @@
     </div>
     <div class="spec-tag">
       GARMENT / T-SHIRT · FRONT<br/>
-      PRINT AREA 41 × 60 CM<br/>
-      SCALE 5 PX = 1 CM
+      PRINT AREA 205 × 300 PX<br/>
+      CANVAS 480 × 580 PX
     </div>
   </header>
 
@@ -246,7 +246,7 @@
       <div class="divider"></div>
 
       <h2>規格表</h2>
-      <p class="sub">即時換算成實際印刷尺寸與位置。</p>
+      <p class="sub">畫布像素座標與尺寸，實際公分由後端依商品實體尺寸換算。</p>
       <div class="tech-pack">
         <div class="row"><span>X 位置（左上角）</span><span id="specX">—</span></div>
         <div class="row"><span>Y 位置（左上角）</span><span id="specY">—</span></div>
@@ -259,8 +259,9 @@
       <div class="json-out" id="jsonOut"></div>
 
       <p class="note">
-        <b>怎麼接後端：</b>把這份 JSON（座標、尺寸、角度，單位皆為公分）連同原始圖檔一併送到你的 API，
-        伺服器端可用 Pillow / sharp 依相同比例重新合成，產出送印檔，不受瀏覽器畫面解析度影響。
+        <b>怎麼接後端：</b>這份 JSON 的座標、尺寸單位都是「畫布像素」（附上 <code>canvas_px</code> 當參考框架），
+        不是實際公分。換算成公分要由後端依「這個商品這張圖」實際量測的物理尺寸去比對計算，
+        不同商品/角度的换算比例不會一樣，不能套用同一個寫死的比例尺。
       </p>
     </div>
   </div>
@@ -277,7 +278,8 @@ fabric.Image.fromURL('assets/polo-shirt-eyes.png', (img) => {
 });
 
 // ---- print-safe area, centered on torso, 避開領口鈕扣與下擺弧線 ----
-const SCALE = 5; // px per cm
+// 座標單位一律是「畫布像素」，不做 cm 換算——cm 換算屬於後端根據
+// 實體商品尺寸比對後才能決定的事，前端沒有校正基準，換算了也是假精度。
 const AREA = { left:135, top:155, width:205, height:300 };
 
 const areaRect = new fabric.Rect({
@@ -379,15 +381,15 @@ function updateSpec(){
   }
   logo.setCoords();
   const b = logo.getBoundingRect(true);
-  const xCm = ((b.left - AREA.left) / SCALE).toFixed(1);
-  const yCm = ((b.top - AREA.top) / SCALE).toFixed(1);
-  const wCm = (b.width / SCALE).toFixed(1);
-  const hCm = (b.height / SCALE).toFixed(1);
+  const xPx = Math.round(b.left - AREA.left);
+  const yPx = Math.round(b.top - AREA.top);
+  const wPx = Math.round(b.width);
+  const hPx = Math.round(b.height);
   const rot = Math.round(logo.angle % 360);
-  document.getElementById('specX').textContent = xCm + ' cm';
-  document.getElementById('specY').textContent = yCm + ' cm';
-  document.getElementById('specW').textContent = wCm + ' cm';
-  document.getElementById('specH').textContent = hCm + ' cm';
+  document.getElementById('specX').textContent = xPx + ' px';
+  document.getElementById('specY').textContent = yPx + ' px';
+  document.getElementById('specW').textContent = wPx + ' px';
+  document.getElementById('specH').textContent = hPx + ' px';
   document.getElementById('specR').textContent = rot + '°';
   jsonOut.classList.remove('show');
 }
@@ -420,16 +422,17 @@ exportBtn.addEventListener('click', ()=>{
     order_ref: "demo-" + Date.now(),
     garment: "tshirt",
     view: "front",
-    print_area_cm: { width: AREA.width/SCALE, height: AREA.height/SCALE },
+    canvas_px: { width: canvas.getWidth(), height: canvas.getHeight() },
+    print_area_px: { left: AREA.left, top: AREA.top, width: AREA.width, height: AREA.height },
     design: {
       filename: logo.name || "uploaded-image.png",
-      position_cm: {
-        x: +((b.left - AREA.left)/SCALE).toFixed(2),
-        y: +((b.top - AREA.top)/SCALE).toFixed(2)
+      position_px: {
+        x: Math.round(b.left - AREA.left),
+        y: Math.round(b.top - AREA.top)
       },
-      size_cm: {
-        width: +(b.width/SCALE).toFixed(2),
-        height: +(b.height/SCALE).toFixed(2)
+      size_px: {
+        width: Math.round(b.width),
+        height: Math.round(b.height)
       },
       rotation_deg: Math.round(logo.angle % 360)
     }
