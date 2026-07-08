@@ -7,14 +7,19 @@
 客製化商品網站的「印圖編輯器」— 讓客戶上傳圖案，在商品上拖拉/縮放/旋轉，指定要印刷的位置，
 系統換算出精確座標與尺寸，供後端合成送印檔或交給印刷廠。
 
-**目前狀態：** 已有一個可運作的前端原型（單一 HTML 檔 + 外部商品圖），尚未串接任何後端或儲存服務。
-這是「概念驗證」階段，接下來要把它整合進實際網站並補上後端。
+**目前狀態：** 已有一個可運作的前端原型（HTML + CSS + JS 三檔 + 外部商品圖），尚未串接任何後端或
+儲存服務。這是「概念驗證」階段，接下來要把它整合進實際網站並補上後端。
 
 ## 現有檔案
 
-- `index.html` — 前端原型，單檔 HTML + Fabric.js（CDN 引入，未打包），可直接用瀏覽器開啟測試。
-  已推送至 GitHub（`yiyen1030/custom-cloth-print`），並串接 Netlify 自動部署（push 到 `main` 即觸發）。
-- `assets/polo-shirt-eyes.png` — Polo 衫正面商品圖（800×800，白底線稿），`index.html` 用
+- `index.html` — 頁面結構（只留 HTML，不含樣式/邏輯），Fabric.js 用 CDN `<script>` 引入
+  （未走 npm 打包），可直接用瀏覽器開啟測試。已推送至 GitHub（`yiyen1030/custom-cloth-print`），
+  並串接 Netlify 自動部署（push 到 `main` 即觸發）。
+- `style.css` — 所有樣式（CSS 變數、版面、RWD 中斷點）。
+- `script.js` — 所有互動邏輯（Fabric.js canvas 初始化、上傳/拖曳/限制範圍、響應式縮放、
+  後台可印刷範圍編輯模式）。原本都寫在 `index.html` 的 `<script>` 內，檔案太長不好閱讀才拆出來，
+  純搬移沒有改邏輯。
+- `assets/polo-shirt-eyes.png` — Polo 衫正面商品圖（800×800，白底線稿），`script.js` 用
   `fabric.Image.fromURL()` 載入並縮放置入 canvas。之後要換其他商品/角度，替換這個檔案即可。
 
 ## 技術選型與原因
@@ -103,7 +108,8 @@
 
 ## 開發慣例
 
-- 目前所有邏輯都在單一 HTML 檔的 `<script>` 內，尚未模組化。若要擴充功能，建議先決定
-  前端框架（是否導入 React/Vue）與建置工具（Vite 等），再把邏輯拆成元件，而不是繼續在單檔裡疊加。
-- 顏色、字體等視覺樣式目前直接寫在 `<style>` 的 CSS 變數裡（`--paper`、`--ink`、`--thread` 等），
+- `index.html`（結構）／`style.css`（樣式）／`script.js`（邏輯）已經分成三個檔案，但都還是
+  全域變數、單一 `<script>` 依序執行，尚未模組化。若要擴充功能，建議先決定前端框架（是否導入
+  React/Vue）與建置工具（Vite 等），再把 `script.js` 拆成元件，而不是繼續在單檔裡疊加。
+- 顏色、字體等視覺樣式目前直接寫在 `style.css` 的 CSS 變數裡（`--paper`、`--ink`、`--thread` 等），
   之後如果有品牌設計系統（design tokens），這裡應該替換成對應的變數來源。
