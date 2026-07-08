@@ -1,33 +1,14 @@
 const canvas = new fabric.Canvas('c', { selection:false });
+const BASE_CANVAS_WIDTH = canvas.getWidth(); // 480，跟版面設計搭配的寬度基準；高度依商品圖比例自動決定
 
-// ---- garment image (換商品/角度只需替換這個檔案) ----
-// 原圖 800x800，實際內容（線稿本身）只佔中間 624x715 的範圍，四周有留白。
-// 用 cropX/cropY/width/height 裁掉留白，再把裁切後的內容等比縮放滿版塞進 canvas，
-// 讓「canvas 的座標範圍」跟「圖片內容的座標範圍」完全重合、沒有多餘留白——
-// canvas 因此可以當成唯一的座標基準：只要之後在別的畫面用同一張圖、同一個
-// canvas 寬高比例（480:550）去滿版繪製，任何 position_px/size_px 座標都能
-// 原樣重現，不用另外換算圖片在畫布裡的偏移量。
-const GARMENT_CONTENT = { cropX:81, cropY:38, width:624, height:715 };
-fabric.Image.fromURL('assets/polo-shirt-eyes.png', (img) => {
-  const scale = canvas.getWidth() / GARMENT_CONTENT.width;
-  img.set({
-    left:0, top:0,
-    cropX:GARMENT_CONTENT.cropX, cropY:GARMENT_CONTENT.cropY,
-    width:GARMENT_CONTENT.width, height:GARMENT_CONTENT.height,
-    scaleX:scale, scaleY:scale,
-    originX:'left', originY:'top', selectable:false, evented:false
-  });
-  canvas.add(img);
-  canvas.sendToBack(img);
-});
-
-// ---- print-safe area, centered on torso, 避開領口鈕扣與下擺弧線 ----
+// ---- print-safe area ----
 // 座標單位一律是「畫布像素」，不做 cm 換算——cm 換算屬於後端根據
 // 實體商品尺寸比對後才能決定的事，前端沒有校正基準，換算了也是假精度。
-const AREA = { left:139, top:185, width:205, height:300 };
+// 初始值先是 0，等圖片載入、量出實際 canvas 尺寸後，由 setAreaDefaults() 填入。
+const AREA = { left:0, top:0, width:0, height:0 };
 
 const areaRect = new fabric.Rect({
-  left:AREA.left, top:AREA.top, width:AREA.width, height:AREA.height,
+  left:0, top:0, width:0, height:0,
   fill:'rgba(193,68,14,0.03)',
   stroke:'#C1440E',
   strokeDashArray:[6,4],
@@ -60,16 +41,90 @@ function drawAreaMarkers(){
   areaMarkers.push(label);
   canvas.add(label);
 }
-drawAreaMarkers();
+
+// AREA 的預設起始位置用「畫布比例」推算（水平置中、寬度抓畫布 45%、上緣約
+// 畫布 32% 處開始），只是一個看起來合理的起點——實際要避開鈕扣/下擺這類
+// 商品細節，本來就無法自動判斷（純像素分析看不懂「這是鈕扣」），這部分
+// 還是要靠下面「後台可印刷範圍編輯模式」讓人手動微調一次。
+function setAreaDefaults(){
+  const w = canvas.getWidth(), h = canvas.getHeight();
+  AREA.width = Math.round(w * 0.45);
+  AREA.height = Math.round(h * 0.5);
+  AREA.left = Math.round((w - AREA.width) / 2);
+  AREA.top = Math.round(h * 0.32);
+  areaRect.set({ left:AREA.left, top:AREA.top, width:AREA.width, height:AREA.height, scaleX:1, scaleY:1 });
+}
+
+// ---- garment image：自動偵測內容邊界、滿版對齊 canvas ----
+// 換掉 assets 底下的圖檔、重新整理頁面，就會自動抓新圖的實際內容邊界
+// （排除四周留白），並依內容比例調整 canvas 高度去滿版鋪滿，不需要手動
+// 重新計算、修改程式碼裡的裁切常數（這是之前的做法，見 git 歷史）。
+// 原理：把圖片畫到一個暫時的畫布上，用 getImageData() 掃描像素，找出
+// 「不是透明、也不接近全白背景」的像素分佈範圍，當作實際內容的邊界。
+function detectContentBBox(imgEl){
+  const w = imgEl.naturalWidth, h = imgEl.naturalHeight;
+  const off = document.createElement('canvas');
+  off.width = w; off.height = h;
+  const ctx = off.getContext('2d');
+  ctx.drawImage(imgEl, 0, 0);
+  const data = ctx.getImageData(0, 0, w, h).data;
+  let minX=w, minY=h, maxX=0, maxY=0, found=false;
+  for(let y=0; y<h; y++){
+    for(let x=0; x<w; x++){
+      const i = (y*w+x)*4;
+      const r=data[i], g=data[i+1], b=data[i+2], a=data[i+3];
+      if(a>10 && !(r>245 && g>245 && b>245)){
+        found = true;
+        if(x<minX) minX=x;
+        if(x>maxX) maxX=x;
+        if(y<minY) minY=y;
+        if(y>maxY) maxY=y;
+      }
+    }
+  }
+  if(!found) return { cropX:0, cropY:0, width:w, height:h }; // 整張都接近全白，保底不裁切
+  return { cropX:minX, cropY:minY, width:(maxX-minX)||1, height:(maxY-minY)||1 };
+}
+
+const GARMENT_IMAGE_URL = 'assets/polo-shirt-eyes.png';
+const rawGarmentImg = new Image();
+rawGarmentImg.crossOrigin = 'anonymous';
+rawGarmentImg.onload = () => {
+  const content = detectContentBBox(rawGarmentImg);
+  const canvasHeight = Math.round(BASE_CANVAS_WIDTH * (content.height / content.width));
+  canvas.setDimensions({ width: BASE_CANVAS_WIDTH, height: canvasHeight });
+  LOGICAL_W = canvas.getWidth();
+  LOGICAL_H = canvas.getHeight();
+  document.getElementById('canvasSpecTag').textContent = LOGICAL_W + ' × ' + LOGICAL_H;
+
+  const garmentImg = new fabric.Image(rawGarmentImg, {
+    left:0, top:0,
+    cropX:content.cropX, cropY:content.cropY,
+    width:content.width, height:content.height,
+    scaleX: BASE_CANVAS_WIDTH / content.width,
+    scaleY: BASE_CANVAS_WIDTH / content.width,
+    originX:'left', originY:'top', selectable:false, evented:false
+  });
+  canvas.add(garmentImg);
+  canvas.sendToBack(garmentImg);
+
+  setAreaDefaults();
+  drawAreaMarkers();
+  updateAreaSpecTag();
+  fitCanvasToContainer();
+  canvas.renderAll();
+};
+rawGarmentImg.src = GARMENT_IMAGE_URL;
 
 canvas.renderAll();
 
 // ---- responsive scaling ----
-// 邏輯座標系統固定在 480x550（AREA、position_px 等都以此為準，輸出的
-// canvas_px 也不會變），畫布在螢幕上顯示多大只是視覺縮放，用 setZoom
-// 讓 Fabric 自動把滑鼠/觸控座標換算回邏輯座標，不用改任何互動邏輯。
-const LOGICAL_W = canvas.getWidth();
-const LOGICAL_H = canvas.getHeight();
+// 邏輯座標系統以目前 canvas 尺寸為準（AREA、position_px 等都以此為準，
+// 輸出的 canvas_px 也不會變），畫布在螢幕上顯示多大只是視覺縮放，用
+// setZoom 讓 Fabric 自動把滑鼠/觸控座標換算回邏輯座標，不用改互動邏輯。
+// 圖片載入完成時（見上方 onload）會重新賦值成實際偵測出的尺寸。
+let LOGICAL_W = canvas.getWidth();
+let LOGICAL_H = canvas.getHeight();
 
 function fitCanvasToContainer(){
   const stage = document.querySelector('.stage');
