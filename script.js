@@ -1,8 +1,22 @@
 const canvas = new fabric.Canvas('c', { selection:false });
 
-// ---- garment image (換商品/角度只需替換這個檔案，原圖 800x800，等比縮放 0.6 塞進 480 寬畫布) ----
+// ---- garment image (換商品/角度只需替換這個檔案) ----
+// 原圖 800x800，實際內容（線稿本身）只佔中間 624x715 的範圍，四周有留白。
+// 用 cropX/cropY/width/height 裁掉留白，再把裁切後的內容等比縮放滿版塞進 canvas，
+// 讓「canvas 的座標範圍」跟「圖片內容的座標範圍」完全重合、沒有多餘留白——
+// canvas 因此可以當成唯一的座標基準：只要之後在別的畫面用同一張圖、同一個
+// canvas 寬高比例（480:550）去滿版繪製，任何 position_px/size_px 座標都能
+// 原樣重現，不用另外換算圖片在畫布裡的偏移量。
+const GARMENT_CONTENT = { cropX:81, cropY:38, width:624, height:715 };
 fabric.Image.fromURL('assets/polo-shirt-eyes.png', (img) => {
-  img.set({ left:0, top:50, scaleX:0.6, scaleY:0.6, originX:'left', originY:'top', selectable:false, evented:false });
+  const scale = canvas.getWidth() / GARMENT_CONTENT.width;
+  img.set({
+    left:0, top:0,
+    cropX:GARMENT_CONTENT.cropX, cropY:GARMENT_CONTENT.cropY,
+    width:GARMENT_CONTENT.width, height:GARMENT_CONTENT.height,
+    scaleX:scale, scaleY:scale,
+    originX:'left', originY:'top', selectable:false, evented:false
+  });
   canvas.add(img);
   canvas.sendToBack(img);
 });
@@ -10,7 +24,7 @@ fabric.Image.fromURL('assets/polo-shirt-eyes.png', (img) => {
 // ---- print-safe area, centered on torso, 避開領口鈕扣與下擺弧線 ----
 // 座標單位一律是「畫布像素」，不做 cm 換算——cm 換算屬於後端根據
 // 實體商品尺寸比對後才能決定的事，前端沒有校正基準，換算了也是假精度。
-const AREA = { left:135, top:155, width:205, height:300 };
+const AREA = { left:139, top:185, width:205, height:300 };
 
 const areaRect = new fabric.Rect({
   left:AREA.left, top:AREA.top, width:AREA.width, height:AREA.height,
@@ -51,7 +65,7 @@ drawAreaMarkers();
 canvas.renderAll();
 
 // ---- responsive scaling ----
-// 邏輯座標系統固定在 480x580（AREA、position_px 等都以此為準，輸出的
+// 邏輯座標系統固定在 480x550（AREA、position_px 等都以此為準，輸出的
 // canvas_px 也不會變），畫布在螢幕上顯示多大只是視覺縮放，用 setZoom
 // 讓 Fabric 自動把滑鼠/觸控座標換算回邏輯座標，不用改任何互動邏輯。
 const LOGICAL_W = canvas.getWidth();
