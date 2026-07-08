@@ -60,6 +60,13 @@
    邏輯座標，跟輸出 JSON 的意義對不上；要縮放畫面就只透過 `fitCanvasToContainer()`。
    另外 `.stage`／`.panel` 這類 CSS Grid 欄位都需要 `min-width:0`，否則欄寬會被固定尺寸的
    canvas 撐開，導致手機版整頁橫向溢出（已踩過這個坑）。
+5. **後台可印刷範圍編輯模式**：「編輯可印刷範圍」按鈕會讓 `areaRect` 從靜態框變成可選取/
+   拖曳/縮放的物件（沿用 Fabric 原生控制點，見 `editAreaBtn`／`saveAreaBtn`／`cancelAreaBtn`
+   事件邏輯）。編輯中用 `constrainToCanvas()` 把範圍限制在畫布邊界內（跟限制設計圖案用的
+   `constrainToArea()` 是同一套邏輯，只是邊界換成整個 canvas）。儲存時要把 `areaRect` 的
+   `scaleX/scaleY` 正規化寫回 `width/height`（見 `saveAreaBtn` handler），否則之後拖曳會疊加
+   縮放、算出來的 px 會跟視覺不符。目前只有單一商品、只輸出 JSON 給人工複製，還沒接後端儲存
+   （見待辦 #2）。
 
 ## 待辦事項（依優先順序）
 
@@ -67,7 +74,8 @@
    （鈕扣領口帶、下擺車縫線位置）重新量測對齊。
 2. **多商品 / 多角度支援**：把 `AREA`（畫布像素座標）、商品底圖抽成設定檔（例如 `products.json`），
    讓每個商品（T恤、帽子、馬克杯…）× 每個角度（正面、背面…）各自對應一組設定，而不是寫死在程式碼中。
-   設定檔裡不需要、也不應該有比例尺欄位——px→cm 換算是後端的事。
+   設定檔裡不需要、也不應該有比例尺欄位——px→cm 換算是後端的事。後台編輯範圍模式（見上方核心
+   邏輯 #5）存下來的 `print_area_px` 之後就是要寫進這份設定檔的資料，還沒接上真正的儲存 API。
 3. **圖片上傳串接儲存服務**：目前圖片是用 `FileReader` 讀成 base64 存在瀏覽器記憶體，
    還沒上傳到伺服器。需要接上傳 API（例如 S3 / GCS presigned URL），JSON 輸出的 `filename`
    要換成實際的檔案 URL。
