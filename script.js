@@ -42,16 +42,15 @@ function drawAreaMarkers(){
   canvas.add(label);
 }
 
-// AREA 的預設起始位置用「畫布比例」推算（水平置中、寬度抓畫布 45%、上緣約
-// 畫布 32% 處開始），只是一個看起來合理的起點——實際要避開鈕扣/下擺這類
-// 商品細節，本來就無法自動判斷（純像素分析看不懂「這是鈕扣」），這部分
-// 還是要靠下面「後台可印刷範圍編輯模式」讓人手動微調一次。
+// AREA 預設值：針對目前 assets/polo-shirt-eyes.png 這張圖（480x550 canvas），
+// 用「後台編輯可印刷範圍」手動調整過的結果，涵蓋鈕扣領口帶到下擺車縫線附近的
+// 較大範圍。這組數字沒辦法自動算出來——換圖或改版型時，要嘛用編輯工具重新拖拉
+// 一次，要嘛把這裡的數字換成新算好的值，不能直接沿用（比例不合會跑到畫布外）。
 function setAreaDefaults(){
-  const w = canvas.getWidth(), h = canvas.getHeight();
-  AREA.width = Math.round(w * 0.45);
-  AREA.height = Math.round(h * 0.5);
-  AREA.left = Math.round((w - AREA.width) / 2);
-  AREA.top = Math.round(h * 0.32);
+  AREA.left = 105;
+  AREA.top = 81;
+  AREA.width = 272;
+  AREA.height = 426;
   areaRect.set({ left:AREA.left, top:AREA.top, width:AREA.width, height:AREA.height, scaleX:1, scaleY:1 });
 }
 
