@@ -134,6 +134,7 @@
     transition:border-color .15s ease, background .15s ease;
   }
   .upload-box:hover{ border-color:var(--thread); background:#FFF8F4; }
+  .is-disabled{ opacity:.4; pointer-events:none; }
   .upload-box input{ display:none; }
   .upload-box .icon{ font-size:22px; margin-bottom:6px; }
   .upload-box .txt{ font-size:13px; font-weight:600; }
@@ -220,7 +221,7 @@
     </div>
     <div class="spec-tag">
       GARMENT / T-SHIRT · FRONT<br/>
-      PRINT AREA 205 × 300 PX<br/>
+      PRINT AREA <span id="areaSpecTag">205 × 300</span> PX<br/>
       CANVAS 480 × 580 PX
     </div>
   </header>
@@ -247,7 +248,7 @@
         <input type="file" id="fileInput" accept="image/*" />
       </label>
 
-      <div class="controls-row">
+      <div class="controls-row" id="uploadControlsRow">
         <button id="resetBtn" disabled>移除圖案</button>
         <button id="centerBtn" disabled>置中</button>
       </div>
@@ -272,6 +273,26 @@
         不是實際公分。換算成公分要由後端依「這個商品這張圖」實際量測的物理尺寸去比對計算，
         不同商品/角度的换算比例不會一樣，不能套用同一個寫死的比例尺。
       </p>
+
+      <div class="divider"></div>
+
+      <h2>後台：可印刷範圍設定</h2>
+      <p class="sub">模擬管理端調整功能，儲存後即時套用到目前畫布（尚未接後端，僅供測試）。</p>
+      <button id="editAreaBtn" style="width:100%;">編輯可印刷範圍</button>
+
+      <div id="areaEditPanel" style="display:none;">
+        <div class="tech-pack" style="margin-top:12px;">
+          <div class="row"><span>X（左上角）</span><span id="areaSpecX">—</span></div>
+          <div class="row"><span>Y（左上角）</span><span id="areaSpecY">—</span></div>
+          <div class="row"><span>寬度</span><span id="areaSpecW">—</span></div>
+          <div class="row"><span>高度</span><span id="areaSpecH">—</span></div>
+        </div>
+        <div class="controls-row" style="margin-top:12px;">
+          <button id="cancelAreaBtn">取消</button>
+          <button class="primary" id="saveAreaBtn">儲存範圍</button>
+        </div>
+      </div>
+      <div class="json-out" id="areaJsonOut"></div>
     </div>
   </div>
 </div>
@@ -297,25 +318,35 @@ const areaRect = new fabric.Rect({
   stroke:'#C1440E',
   strokeDashArray:[6,4],
   strokeWidth:1.5,
-  selectable:false, evented:false, rx:2, ry:2
+  selectable:false, evented:false, rx:2, ry:2,
+  cornerColor:'#C1440E', cornerStrokeColor:'#221F1A',
+  cornerSize:12, touchCornerSize:28, transparentCorners:false,
+  borderColor:'#C1440E'
 });
 canvas.add(areaRect);
 
-// corner notches (tailor pattern marks)
+// corner notches (tailor pattern marks) + label，AREA 改動後可用 drawAreaMarkers() 重繪
+let areaMarkers = [];
 function notch(x,y,dx,dy){
   return new fabric.Line([x,y,x+dx,y+dy], { stroke:'#C1440E', strokeWidth:2, selectable:false, evented:false });
 }
-[[AREA.left,AREA.top,10,0],[AREA.left,AREA.top,0,10],
- [AREA.left+AREA.width,AREA.top,-10,0],[AREA.left+AREA.width,AREA.top,0,10],
- [AREA.left,AREA.top+AREA.height,10,0],[AREA.left,AREA.top+AREA.height,0,-10],
- [AREA.left+AREA.width,AREA.top+AREA.height,-10,0],[AREA.left+AREA.width,AREA.top+AREA.height,0,-10]
-].forEach(a=>canvas.add(notch(...a)));
+function drawAreaMarkers(){
+  areaMarkers.forEach(o => canvas.remove(o));
+  areaMarkers = [];
+  [[AREA.left,AREA.top,10,0],[AREA.left,AREA.top,0,10],
+   [AREA.left+AREA.width,AREA.top,-10,0],[AREA.left+AREA.width,AREA.top,0,10],
+   [AREA.left,AREA.top+AREA.height,10,0],[AREA.left,AREA.top+AREA.height,0,-10],
+   [AREA.left+AREA.width,AREA.top+AREA.height,-10,0],[AREA.left+AREA.width,AREA.top+AREA.height,0,-10]
+  ].forEach(a=>{ const n = notch(...a); areaMarkers.push(n); canvas.add(n); });
 
-const areaLabel = new fabric.Text('可印刷範圍', {
-  left:AREA.left, top:AREA.top-20, fontSize:11, fill:'#C1440E',
-  fontFamily:"'JetBrains Mono', monospace", selectable:false, evented:false
-});
-canvas.add(areaLabel);
+  const label = new fabric.Text('可印刷範圍', {
+    left:AREA.left, top:AREA.top-20, fontSize:11, fill:'#C1440E',
+    fontFamily:"'JetBrains Mono', monospace", selectable:false, evented:false
+  });
+  areaMarkers.push(label);
+  canvas.add(label);
+}
+drawAreaMarkers();
 
 canvas.renderAll();
 
@@ -402,10 +433,32 @@ function constrainToArea(obj){
   obj.setCoords();
 }
 
-canvas.on('object:moving', (e)=>{ constrainToArea(e.target); updateSpec(); });
-canvas.on('object:scaling', (e)=>{ constrainToArea(e.target); updateSpec(); });
+function constrainToCanvas(obj){
+  obj.setCoords();
+  const b = obj.getBoundingRect(true);
+  let dx = 0, dy = 0;
+  if(b.left < 0) dx = -b.left;
+  if(b.top < 0) dy = -b.top;
+  if(b.left + b.width > LOGICAL_W) dx = LOGICAL_W - (b.left + b.width);
+  if(b.top + b.height > LOGICAL_H) dy = LOGICAL_H - (b.top + b.height);
+  if(dx !== 0) obj.left += dx;
+  if(dy !== 0) obj.top += dy;
+  obj.setCoords();
+}
+
+canvas.on('object:moving', (e)=>{
+  if(editingArea && e.target === areaRect){ constrainToCanvas(areaRect); updateAreaEditSpec(); return; }
+  constrainToArea(e.target); updateSpec();
+});
+canvas.on('object:scaling', (e)=>{
+  if(editingArea && e.target === areaRect){ constrainToCanvas(areaRect); updateAreaEditSpec(); return; }
+  constrainToArea(e.target); updateSpec();
+});
 canvas.on('object:rotating', (e)=>{ updateSpec(); });
-canvas.on('object:modified', updateSpec);
+canvas.on('object:modified', (e)=>{
+  if(editingArea && e.target === areaRect) return;
+  updateSpec();
+});
 
 function updateSpec(){
   if(!logo){ 
@@ -475,6 +528,106 @@ exportBtn.addEventListener('click', ()=>{
 });
 
 updateSpec();
+
+// ---- 後台：可印刷範圍編輯模式（模擬管理端調整，尚未接後端，僅在此頁面即時生效） ----
+const editAreaBtn = document.getElementById('editAreaBtn');
+const areaEditPanel = document.getElementById('areaEditPanel');
+const saveAreaBtn = document.getElementById('saveAreaBtn');
+const cancelAreaBtn = document.getElementById('cancelAreaBtn');
+const areaJsonOut = document.getElementById('areaJsonOut');
+const areaSpecTag = document.getElementById('areaSpecTag');
+const uploadControlsRow = document.getElementById('uploadControlsRow');
+
+let editingArea = false;
+let areaBackup = null;
+
+function updateAreaSpecTag(){
+  areaSpecTag.textContent = AREA.width + ' × ' + AREA.height;
+}
+updateAreaSpecTag();
+
+function updateAreaEditSpec(){
+  areaRect.setCoords();
+  const b = areaRect.getBoundingRect(true);
+  document.getElementById('areaSpecX').textContent = Math.round(b.left) + ' px';
+  document.getElementById('areaSpecY').textContent = Math.round(b.top) + ' px';
+  document.getElementById('areaSpecW').textContent = Math.round(b.width) + ' px';
+  document.getElementById('areaSpecH').textContent = Math.round(b.height) + ' px';
+}
+
+function exitAreaEditMode(){
+  editingArea = false;
+  areaRect.set({ selectable:false, evented:false, fill:'rgba(193,68,14,0.03)' });
+  canvas.discardActiveObject();
+  if(logo){ logo.selectable = true; logo.evented = true; }
+  uploadControlsRow.classList.remove('is-disabled');
+  uploadBox.classList.remove('is-disabled');
+  fileInput.disabled = false;
+  editAreaBtn.style.display = '';
+  areaEditPanel.style.display = 'none';
+  canvas.renderAll();
+}
+
+editAreaBtn.addEventListener('click', ()=>{
+  editingArea = true;
+  areaBackup = { left:AREA.left, top:AREA.top, width:AREA.width, height:AREA.height };
+
+  if(logo){ logo.selectable = false; logo.evented = false; }
+  canvas.discardActiveObject();
+  uploadControlsRow.classList.add('is-disabled');
+  uploadBox.classList.add('is-disabled');
+  fileInput.disabled = true;
+
+  areaMarkers.forEach(o => canvas.remove(o));
+  areaMarkers = [];
+
+  areaRect.set({
+    selectable:true, evented:true, hasControls:true, hasBorders:true,
+    lockRotation:true, fill:'rgba(193,68,14,0.15)'
+  });
+  canvas.setActiveObject(areaRect);
+  canvas.renderAll();
+
+  editAreaBtn.style.display = 'none';
+  areaEditPanel.style.display = 'block';
+  areaJsonOut.classList.remove('show');
+  updateAreaEditSpec();
+});
+
+saveAreaBtn.addEventListener('click', ()=>{
+  areaRect.setCoords();
+  const b = areaRect.getBoundingRect(true);
+  AREA.left = Math.round(b.left);
+  AREA.top = Math.round(b.top);
+  AREA.width = Math.round(b.width);
+  AREA.height = Math.round(b.height);
+
+  areaRect.set({
+    left:AREA.left, top:AREA.top, width:AREA.width, height:AREA.height,
+    scaleX:1, scaleY:1
+  });
+
+  exitAreaEditMode();
+  drawAreaMarkers();
+  updateAreaSpecTag();
+
+  if(logo){ constrainToArea(logo); updateSpec(); }
+
+  areaJsonOut.textContent = JSON.stringify({ print_area_px: { left:AREA.left, top:AREA.top, width:AREA.width, height:AREA.height } }, null, 2);
+  areaJsonOut.classList.add('show');
+  canvas.renderAll();
+});
+
+cancelAreaBtn.addEventListener('click', ()=>{
+  areaRect.set({
+    left:areaBackup.left, top:areaBackup.top,
+    width:areaBackup.width, height:areaBackup.height,
+    scaleX:1, scaleY:1
+  });
+  exitAreaEditMode();
+  drawAreaMarkers();
+  canvas.renderAll();
+});
 </script>
 </body>
 </html>
