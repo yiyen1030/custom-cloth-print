@@ -1,0 +1,203 @@
+:root{
+  --paper:#FAF7F0;
+  --ink:#221F1A;
+  --thread:#C1440E;
+  --tape:#E0A800;
+  --grey:#8B8478;
+  --grey-line:#DAD3C6;
+  --panel:#FFFFFF;
+}
+*{ box-sizing:border-box; }
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Space Grotesk', sans-serif;
+  min-height:100vh;
+}
+.wrap{
+  max-width:1180px;
+  margin:0 auto;
+  padding:36px 24px 60px;
+}
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  border-bottom:2px solid var(--ink);
+  padding-bottom:18px;
+  margin-bottom:28px;
+  flex-wrap:wrap;
+  gap:12px;
+}
+.eyebrow{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.14em;
+  color:var(--thread);
+  text-transform:uppercase;
+  margin:0 0 6px;
+}
+h1{
+  font-family:'Bebas Neue', sans-serif;
+  font-size:44px;
+  letter-spacing:0.02em;
+  margin:0;
+  line-height:1;
+}
+.spec-tag{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  color:var(--grey);
+  text-align:right;
+  line-height:1.6;
+}
+.layout{
+  display:grid;
+  grid-template-columns:1fr 340px;
+  gap:32px;
+}
+@media (max-width:860px){
+  .layout{ grid-template-columns:1fr; }
+}
+@media (max-width:600px){
+  .wrap{ padding:20px 12px 40px; }
+  .stage{ padding:14px; }
+  .canvas-holder{ padding:10px; }
+  h1{ font-size:32px; }
+}
+.stage{
+  background:var(--panel);
+  border:1px solid var(--grey-line);
+  border-radius:4px;
+  padding:28px;
+  position:relative;
+  min-width:0;
+}
+.stage-label{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  color:var(--grey);
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  margin-bottom:14px;
+  display:flex;
+  justify-content:space-between;
+}
+canvas{ display:block; margin:0 auto; }
+.canvas-holder{
+  display:flex;
+  justify-content:center;
+  background:
+    linear-gradient(90deg, var(--grey-line) 1px, transparent 1px) 0 0/24px 24px,
+    linear-gradient(var(--grey-line) 1px, transparent 1px) 0 0/24px 24px;
+  background-color:#FDFCFA;
+  border:1px dashed var(--grey-line);
+  padding:20px;
+}
+.panel{
+  background:var(--panel);
+  border:1px solid var(--grey-line);
+  border-radius:4px;
+  padding:24px;
+  min-width:0;
+  height:fit-content;
+}
+.panel h2{
+  font-family:'Bebas Neue', sans-serif;
+  font-size:20px;
+  letter-spacing:0.03em;
+  margin:0 0 4px;
+}
+.panel .sub{
+  font-size:12px;
+  color:var(--grey);
+  margin:0 0 18px;
+}
+.upload-box{
+  display:block;
+  border:2px dashed var(--grey);
+  border-radius:4px;
+  padding:22px 16px;
+  text-align:center;
+  cursor:pointer;
+  background:#FDFCFA;
+  transition:border-color .15s ease, background .15s ease;
+}
+.upload-box:hover{ border-color:var(--thread); background:#FFF8F4; }
+.is-disabled{ opacity:.4; pointer-events:none; }
+.upload-box input{ display:none; }
+.upload-box .icon{ font-size:22px; margin-bottom:6px; }
+.upload-box .txt{ font-size:13px; font-weight:600; }
+.upload-box .txt2{ font-size:11px; color:var(--grey); margin-top:2px; }
+
+.controls-row{
+  display:flex;
+  gap:8px;
+  margin-top:16px;
+}
+button{
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:600;
+  font-size:13px;
+  border:1px solid var(--ink);
+  background:var(--paper);
+  color:var(--ink);
+  border-radius:3px;
+  padding:9px 14px;
+  cursor:pointer;
+  flex:1;
+  transition:background .15s ease, color .15s ease;
+}
+button:hover{ background:var(--ink); color:var(--paper); }
+button.primary{
+  background:var(--ink);
+  color:var(--paper);
+}
+button.primary:hover{ background:var(--thread); border-color:var(--thread); }
+button:disabled{ opacity:.4; cursor:not-allowed; }
+button:disabled:hover{ background:var(--paper); color:var(--ink); }
+
+.divider{
+  height:1px;
+  background:var(--grey-line);
+  margin:20px 0;
+}
+
+.tech-pack{
+  font-family:'JetBrains Mono', monospace;
+  font-size:12px;
+}
+.tech-pack .row{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+  border-bottom:1px solid var(--grey-line);
+}
+.tech-pack .row span:first-child{ color:var(--grey); }
+.tech-pack .row span:last-child{ font-weight:500; }
+
+.json-out{
+  margin-top:14px;
+  background:var(--ink);
+  color:#E8E2D4;
+  border-radius:4px;
+  padding:14px;
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  line-height:1.6;
+  white-space:pre-wrap;
+  word-break:break-all;
+  max-height:220px;
+  overflow-y:auto;
+  display:none;
+}
+.json-out.show{ display:block; }
+
+.note{
+  font-size:11.5px;
+  color:var(--grey);
+  line-height:1.6;
+  margin-top:14px;
+}
+.note b{ color:var(--ink); }
